@@ -1,81 +1,89 @@
 # Kjøleskapsskjerm
 
-En felles skjerm for kjøleskapet med klokke, vær for Nesttun (fra yr/MET), felles Google-kalender, handleliste og huskeliste.
-Dere legger inn ting fra iPhone, og det dukker opp på skjermen. Listene kan også krysses av og fylles på rett fra skjermen.
+En felles skjerm på kjøleskapet som viser det som gjelder **i dag**: klokke, vær, hva barna må ha på seg, dagens avtaler, dagens middag, søppeltømming, huskeliste og handleliste.
 
-Uten oppsett kjører skjermen i **demomodus** med eksempeldata, så dere kan se hvordan den ser ut.
+## Dagens løsning (fra 24. november 2026)
 
-## Slik henger det sammen
+Skjermen er **Handlelista**, appen vi allerede bruker på telefonene. Den ligger som en artifact på claude.ai og har nå en egen **kjøleskapsmodus**. Alt dere gjør på telefonen, dukker opp på skjermen med en gang, og omvendt.
 
-| Hva | Hvor dataene bor | Slik legger dere inn fra iPhone |
+> Nettsiden i dette repoet (`index.html`, GitHub Pages) var første versjon. Den virker fortsatt, men den er ikke koblet til Handlelista og brukes bare som reserve.
+
+### Slik ser «I dag»-visningen ut
+
+![I dag-visning med eksempeldata](i-dag-visning.png)
+
+| Del | Hva den viser | Hvor dataene kommer fra |
 |---|---|---|
-| Kalender | En felles Google-kalender («Hjemme») | Kalender-appen på iPhone eller Google Kalender-appen |
-| Handleliste | Todoist-prosjektet «Handleliste», delt mellom dere | Todoist-appen, eller «Hei Siri, legg til melk i Todoist» |
-| Huskeliste | Todoist-prosjektet «Huskeliste», delt mellom dere | Todoist-appen (kan ha frister) |
-| Vær | yr / MET Norge | Ingenting, kommer automatisk |
+| Øverst | Klokke, dato, vær nå og de neste timene | Værdata som Claude legger inn hver morgen (se under) |
+| «Ta med i dag» | F.eks. «regntøy og støvler» eller «ullundertøy, lue og votter». Etter kl. 17 gjelder den i morgen | Regnes ut fra været mellom 07 og 17 |
+| Kalender | Dagens avtaler | Google Kalender, via Google Kalender-koblingen i Claude |
+| Middag | Dagens middag | Ukemenyen i Handlelista |
+| Søppel | «Hentes i dag» og «Sett ut i kveld» (fra kl. 12 dagen før) | Faste tømmeregler fra BIR (se under) |
+| Huske | Felles huskeliste. Kryss av når noe er gjort | Handlelista (synkes mellom telefonene) |
+| Handleliste | Det som mangler, sortert etter kategori. Legg til eller kryss av rett på skjermen | Handlelista |
+| I morgen | Én linje etter kl. 17 med morgendagens avtaler, middag og søppel | Som over |
 
----
+Fra kl. 22 til 06 bytter skjermen til mørkt tema.
 
-## Steg 1: Felles Google-kalender (10 min, på PC)
+### Slik åpner du kjøleskapsmodus
 
-1. Gå til [calendar.google.com](https://calendar.google.com) på PC.
-2. Til venstre ved **Andre kalendere**, trykk **+** og velg **Opprett ny kalender**. Kall den f.eks. «Hjemme».
-3. Åpne innstillingene for «Hjemme», gå til **Del med bestemte personer**, legg til samboerens e-post og velg **Gjør endringer i aktiviteter**.
-4. Lenger ned under **Integrer kalender**, kopier **Kalender-ID** (ser ut som `…@group.calendar.google.com`). Den trenger dere i steg 2.
-5. På hver iPhone: **Innstillinger → Apper → Kalender → Kalenderkontoer → Legg til konto → Google**. Da kan dere legge inn avtaler i «Hjemme» rett fra iPhone-kalenderen.
+1. Åpne Handlelista.
+2. Gå til fanen **Lista**, scroll helt ned og trykk **Kjøleskapsmodus**.
+3. Enheten husker valget. Trykk **Avslutt** oppe til høyre for å gå tilbake til vanlig visning.
 
-## Steg 2: Kalender-koblingen (10 min, på PC)
+Kjøleskapsmodus gjelder bare enheten du trykker på. Telefonene påvirkes ikke.
 
-Skjermen henter kalenderen gjennom et lite skript som kjører i din egen Google-konto.
+## Vær: morgenkjøring
 
-1. Gå til [script.google.com](https://script.google.com) og trykk **Nytt prosjekt**. Kall det «Kjøleskapsskjerm».
-2. Slett alt som står der, og lim inn innholdet fra [`apps-script/Code.gs`](apps-script/Code.gs).
-3. Endre de to tingene øverst:
-   - `KEY`: bytt til en lang, tilfeldig tekst (f.eks. `blåbær-tromme-7391-sky`). Dette er passordet skjermen bruker.
-   - `CALENDAR_IDS`: lim inn Kalender-ID-en fra steg 1. Behold `'primary'` hvis du også vil se din egen hovedkalender.
-4. Trykk **Distribuer → Ny distribusjon**. Velg typen **Nettapp**, **Kjør som: meg**, **Hvem har tilgang: Alle**. Trykk **Distribuer**.
-5. Google spør om tillatelse til å lese kalenderen. Godta (velg «Avansert → Gå til Kjøleskapsskjerm» hvis den advarer, det er ditt eget skript).
-6. Kopier **nettapp-URL-en** (slutter på `/exec`).
+Claude.ai lar ikke Handlelista hente data fra andre nettsider selv. Derfor kjører en **planlagt oppgave hver morgen kl. 05:27**. Den henter timevarselet for Nesttun fra yr.no og legger det inn i Handlelista. Varselet dekker resten av dagen og hele neste dag.
 
-Det er bare de som har både URL-en og nøkkelen som kan lese kalenderen.
+- Hver kjøring dukker opp som en egen liten tråd i Claude-prosjektet. Det er normalt.
+- Feiler en kjøring, viser skjermen været fra dagen før til neste kjøring går bra.
+- Den planlagte oppgaven heter «Vær til kjøleskapsskjermen» og kan slås av i listen over planlagte oppgaver.
 
-## Steg 3: Delte lister i Todoist (10 min)
+## Kalender: Google Kalender-koblingen
 
-1. Last ned **Todoist** fra App Store på begge iPhonene og lag en konto hver (gratisversjonen holder).
-2. Én av dere lager to prosjekter: **Handleliste** og **Huskeliste** (navnene må være akkurat slik, eller endres i skjermens innstillinger).
-3. Del begge prosjektene med den andre: åpne prosjektet, trykk **⋯ → Del** og inviter med e-post.
-4. Hent API-tokenet til den som eier prosjektene: i Todoist på nett, **Innstillinger → Integrasjoner → Utvikler → API-token**. Kopier det.
+Kalenderen hentes med **Google Kalender-koblingen (connector) i Claude**, med kontoen som er logget inn på claude.ai. Den oppdateres hvert 5. minutt.
 
-Tips: I Todoist-appen kan dere legge til en Siri-snarvei, så «Hei Siri, legg til melk i Todoist» havner rett i handlelisten.
+- Første gang kjøleskapsmodus åpnes, spør Claude om siden får lese Google Kalender. Trykk **Tillat**.
+- Hvilke kalendere som vises, velger du under **Innstillinger** i kjøleskapsmodus. Skriv kalender-ID-ene skilt med komma. `primary` er din egen hovedkalender. ID-en til den felles kalenderen finner du på PC i Google Kalender: ⋮ ved kalenderen → **Innstillinger og deling** → **Integrer kalender** → **Kalender-ID**.
+- Innstillingen lagres bare på enheten du skriver den inn på. Den må altså også legges inn på nettbrettet.
 
-## Steg 4: Skjermen på nett
+## Søppel: BIR
 
-Skjermen er én fil (`index.html`) som legges ut gratis med GitHub Pages. Når GitHub-repoet finnes, legger Claude koden der og slår på Pages. Adressen blir da noe som `https://<brukernavn>.github.io/kjoleskapsskjerm/`.
+Tømmedagene ligger som faste regler i Handlelista:
 
-## Steg 5: Nettbrettet (20 min)
+| Type | Når |
+|---|---|
+| Restavfall | Hver onsdag |
+| Matavfall | Annenhver tirsdag |
+| Papir og plast | Hver 4. tirsdag |
+| Glass og metall | Ikke lagt inn ennå (BIR viser ingen kommende dato) |
 
-Anbefalt: Samsung Galaxy Tab A9+ (11") eller tilsvarende Android-nettbrett, en magnetisk holder og en lang USB-C-kabel.
+Ved jul og andre helligdager kan BIR flytte tømmedager. Sjekk BIR-appen da. Hvis noe endres, eller når neste dato for glass og metall er kjent, ber du Claude oppdatere reglene.
 
-1. Sett opp nettbrettet som vanlig og koble til wifi.
-2. Skru på batterivern så det tåler å stå i lading hele tiden: **Innstillinger → Batteri → Batterivern → på** (lader bare til 80–85 %).
+## Nettbrettet
+
+Anbefalt: Samsung Galaxy Tab A9+ (11") eller et lignende Android-nettbrett, en magnetisk holder og en lang USB-C-kabel.
+
+1. Sett opp nettbrettet og koble det til wifi.
+2. Slå på batterivern, så det tåler å stå i lading hele tiden: **Innstillinger → Batteri → Batterivern**.
 3. Installer **Fully Kiosk Browser** fra Play Butikk.
-4. I Fully Kiosk: sett **Start URL** til adressen fra steg 4, og slå på:
-   - *Keep Screen On* (skjermen står på)
-   - *Fullscreen Mode* / *Hide Status Bar*
-   - *Start on Boot* (starter av seg selv etter strømbrudd)
-   - Valgfritt: *Screen Brightness* lav om kvelden. Skjermen bytter selv til mørkt tema fra kl. 22 til 06.
-5. Trykk **⚙︎** oppe til høyre på skjermen og fyll inn kalender-URL, nøkkel og Todoist-token. Trykk **Lagre**.
+4. Åpne claude.ai i Fully Kiosk og logg inn med kontoen som eier Handlelista.
+5. Sett **Start URL** til lenken til Handlelista, og slå på *Keep Screen On*, *Fullscreen Mode* og *Start on Boot*.
+6. Åpne kjøleskapsmodus (se over), trykk **Tillat** for Google Kalender og legg inn kalender-ID-ene under **Innstillinger**.
 
-Slipper du å taste lange koder på nettbrettet, kan du åpne én lenke på formen
-`https://…/kjoleskapsskjerm/?kalenderUrl=…&kalenderNokkel=…&todoistToken=…`
-Den lagrer innstillingene på nettbrettet og fjerner dem fra adresselinjen.
+Godt å vite:
+- Nettbrettet er logget inn på Claude-kontoen. Fully Kiosk låser det til Handlelista, så chatter og annet er ikke tilgjengelig fra kjøleskapet.
+- Innloggingen kan av og til gå ut. Da logger du bare inn på nytt.
 
-Innstillingene lagres kun på nettbrettet, aldri i koden.
+## Personvern
 
-## Hvor ofte den oppdaterer
+- Repoet er offentlig, men inneholder ingen personlige data, adresser, nøkler eller lenker til Handlelista.
+- Handlelista er privat på claude.ai. Kalenderen leses med koblingen til den som er logget inn, og lagres ikke i Handlelista.
 
-- Klokke: hvert 10. sekund
-- Lister: hvert minutt
-- Kalender: hvert 5. minutt
-- Vær: hver halvtime
-- Hele siden lastes på nytt kl. 03 hver natt
+## Filer i repoet
+
+- `index.html`: den første skjermen (GitHub Pages), nå reserve.
+- `apps-script/Code.gs`: kalenderskript for GitHub-skjermen. Trengs ikke for Handlelista.
+- `forhandsvisning.png`: skjermbilde av GitHub-skjermen.
