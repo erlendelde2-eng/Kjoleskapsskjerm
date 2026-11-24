@@ -291,13 +291,14 @@ function vaerIkon(kode) {
 }
 async function hentVaer() {
   let data;
-  if (demo()) data = demoVaer();
-  else {
-    try {
-      const r = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${(+innst.lat).toFixed(4)}&lon=${(+innst.lon).toFixed(4)}`);
-      if (!r.ok) throw new Error(r.status);
-      data = await r.json();
-    } catch (e) { $('vaer').innerHTML = '<span class="tom">Fikk ikke hentet vær</span>'; return; }
+  // Været trenger ikke oppsett, så det hentes ekte også i demomodus
+  try {
+    const r = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${(+innst.lat).toFixed(4)}&lon=${(+innst.lon).toFixed(4)}`);
+    if (!r.ok) throw new Error(r.status);
+    data = await r.json();
+  } catch (e) {
+    if (demo()) data = demoVaer();
+    else { $('vaer').innerHTML = '<span class="tom">Fikk ikke hentet vær</span>'; return; }
   }
   const serie = data.properties.timeseries;
   const naa = serie[0];
