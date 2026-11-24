@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f3ee">
+<title>Kjøleskapet</title>
+<style>
+  :root {
+    --bg: #f6f3ee;
+    --card: #ffffff;
+    --ink: #1f2328;
+    --muted: #6b7178;
+    --line: #e6e1d8;
+    --accent: #2f6f5e;
+    --accent-soft: #e3efe9;
+    --warn: #b4552d;
+    --radius: 18px;
+  }
+  body.natt {
+    --bg: #111416;
+    --card: #1a1e21;
+    --ink: #d9dcdf;
+    --muted: #868c92;
+    --line: #2a2f33;
+    --accent: #6fb39d;
+    --accent-soft: #20302b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 18px;
+    -webkit-user-select: none; user-select: none;
+    overflow: hidden;
+  }
+  .grid {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 16px;
+    padding: 18px;
+  }
+  header {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .klokke { font-size: 64px; font-weight: 600; letter-spacing: -1px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .dato { font-size: 22px; color: var(--muted); }
+  .dato::first-letter { text-transform: uppercase; }
+  .vaer { margin-left: auto; display: flex; gap: 18px; align-items: center; }
+  .vaer-naa { display: flex; align-items: center; gap: 8px; }
+  .vaer-naa .ikon { font-size: 48px; }
+  .vaer-naa .temp { font-size: 44px; font-weight: 600; }
+  .vaer-time { text-align: center; font-size: 15px; color: var(--muted); min-width: 52px; }
+  .vaer-time .ikon { font-size: 26px; display: block; }
+  .vaer-time .t { color: var(--ink); font-weight: 600; font-size: 17px; }
+  .regn { color: #3a78b8; font-size: 13px; }
+  .tannhjul { background: none; border: 0; font-size: 22px; color: var(--muted); padding: 8px; cursor: pointer; }
+
+  .kort {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  .kort h2 { margin: 0 0 10px; font-size: 20px; display: flex; align-items: center; gap: 8px; }
+  .kort h2 .antall { margin-left: auto; font-size: 15px; color: var(--muted); font-weight: 500; }
+  .rull { overflow-y: auto; flex: 1; min-height: 0; }
+
+  .dag { margin-bottom: 14px; }
+  .dag-navn { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px; }
+  .dag-navn.idag { color: var(--accent); }
+  .hendelse { display: flex; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .hendelse:last-child { border-bottom: 0; }
+  .hendelse .tid { width: 92px; flex-shrink: 0; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 16px; }
+  .hendelse .tittel { font-size: 19px; }
+  .prikk { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; transform: translateY(-1px); }
+  .tom { color: var(--muted); font-style: italic; padding: 6px 0; }
+
+  ul.liste { list-style: none; margin: 0; padding: 0; }
+  ul.liste li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 2px; border-bottom: 1px solid var(--line);
+    font-size: 20px; cursor: pointer;
+  }
+  ul.liste li .boks {
+    width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line); flex-shrink: 0;
+    display: grid; place-items: center; color: #fff; font-size: 16px;
+  }
+  ul.liste li.ferdig { color: var(--muted); text-decoration: line-through; }
+  ul.liste li.ferdig .boks { background: var(--accent); border-color: var(--accent); }
+  ul.liste li .frist { margin-left: auto; white-space: nowrap; font-size: 14px; color: var(--muted); }
+  ul.liste li .frist.forsinket { color: var(--warn); }
+
+  form.legg-til { display: flex; gap: 8px; margin-top: 10px; }
+  form.legg-til input {
+    flex: 1; font-size: 18px; padding: 10px 12px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+    -webkit-user-select: text; user-select: text;
+  }
+  form.legg-til button, .knapp {
+    font-size: 18px; padding: 10px 16px; border-radius: 12px; border: 0;
+    background: var(--accent); color: #fff; cursor: pointer;
+  }
+
+  footer { position: fixed; bottom: 4px; right: 14px; font-size: 11px; color: var(--muted); }
+  .banner {
+    position: fixed; bottom: 4px; left: 18px;
+    background: var(--ink); color: var(--bg); padding: 3px 12px; border-radius: 999px; font-size: 12px;
+  }
+  .feil { color: var(--warn); font-size: 14px; margin-top: 6px; }
+
+  /* Innstillinger */
+  .overlegg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 10; }
+  .overlegg.vis { display: flex; }
+  .dialog { background: var(--card); color: var(--ink); border-radius: var(--radius); padding: 22px; width: min(620px, 94vw); max-height: 92vh; overflow-y: auto; }
+  .dialog h3 { margin-top: 0; }
+  .dialog label { display: block; font-size: 14px; color: var(--muted); margin: 12px 0 4px; }
+  .dialog input { width: 100%; font-size: 16px; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); -webkit-user-select: text; user-select: text; }
+  .dialog .rad { display: flex; gap: 10px; }
+  .dialog .rad > div { flex: 1; }
+  .dialog .knapper { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+  .knapp.sekundaer { background: var(--line); color: var(--ink); }
+
+  /* Stående nettbrett / smal skjerm */
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    .grid { height: auto; grid-template-columns: 1fr; }
+    header { flex-wrap: wrap; }
+    .vaer { margin-left: 0; width: 100%; overflow-x: auto; }
+    .kort { max-height: none; }
+  }
+</style>
+</head>
+<body>
+<div class="grid">
+  <header>
+    <div>
+      <div class="klokke" id="klokke">--:--</div>
+      <div class="dato" id="dato"></div>
+    </div>
+    <div class="vaer" id="vaer"></div>
+    <button class="tannhjul" id="aapne-innst" aria-label="Innstillinger">⚙︎</button>
+  </header>
+
+  <section class="kort">
+    <h2>📅 Kalender</h2>
+    <div class="rull" id="kalender"></div>
+    <div class="feil" id="kalender-feil"></div>
+  </section>
+
+  <section class="kort">
+    <h2>🛒 Handleliste <span class="antall" id="handle-antall"></span></h2>
+    <div class="rull"><ul class="liste" id="handleliste"></ul></div>
+    <form class="legg-til" data-liste="handle"><input placeholder="Legg til vare…" enterkeyhint="done"><button>+</button></form>
+    <div class="feil" id="handle-feil"></div>
+  </section>
+
+  <section class="kort">
+    <h2>✅ Huskeliste <span class="antall" id="huske-antall"></span></h2>
+    <div class="rull"><ul class="liste" id="huskeliste"></ul></div>
+    <form class="legg-til" data-liste="huske"><input placeholder="Legg til oppgave…" enterkeyhint="done"><button>+</button></form>
+    <div class="feil" id="huske-feil"></div>
+  </section>
+</div>
+
+<footer>Værdata: MET Norge (yr.no) · Lister: Todoist</footer>
+<div class="banner" id="demo-banner" hidden>Demomodus – trykk ⚙︎ for å koble til kalender og lister</div>
+
+<div class="overlegg" id="innst">
+  <form class="dialog" id="innst-skjema">
+    <h3>Innstillinger</h3>
+    <label>Kalender-adresse (Google Apps Script-URL)</label>
+    <input name="kalenderUrl" placeholder="https://script.google.com/macros/s/…/exec">
+    <label>Kalender-nøkkel (samme som KEY i skriptet)</label>
+    <input name="kalenderNokkel">
+    <label>Todoist API-token</label>
+    <input name="todoistToken" placeholder="Innstillinger → Integrasjoner → Utvikler">
+    <div class="rad">
+      <div><label>Todoist-prosjekt for handleliste</label><input name="handleProsjekt"></div>
+      <div><label>Todoist-prosjekt for huskeliste</label><input name="huskeProsjekt"></div>
+    </div>
+    <div class="rad">
+      <div><label>Breddegrad</label><input name="lat" inputmode="decimal"></div>
+      <div><label>Lengdegrad</label><input name="lon" inputmode="decimal"></div>
+    </div>
+    <label>Antall dager i kalenderen</label>
+    <input name="dager" inputmode="numeric">
+    <div class="knapper">
+      <button type="button" class="knapp sekundaer" id="lukk-innst">Avbryt</button>
+      <button class="knapp">Lagre</button>
+    </div>
+  </form>
+</div>
+
+<script>
+'use strict';
+
+// ---------- Innstillinger ----------
+const STANDARD = {
+  kalenderUrl: '',
+  kalenderNokkel: '',
+  todoistToken: '',
+  handleProsjekt: 'Handleliste',
+  huskeProsjekt: 'Huskeliste',
+  lat: '60.3176',   // Nesttun
+  lon: '5.3540',
+  dager: '7',
+};
+const LAGER_NOKKEL = 'kjoleskap-innstillinger';
+
+function lesInnst() {
+  let lagret = {};
+  try { lagret = JSON.parse(localStorage.getItem(LAGER_NOKKEL) || '{}'); } catch (e) {}
+  return Object.assign({}, STANDARD, lagret);
+}
+function lagreInnst(i) {
+  try { localStorage.setItem(LAGER_NOKKEL, JSON.stringify(i)); } catch (e) {}
+}
+
+// Innstillinger kan også sendes inn i lenken én gang, f.eks.
+// index.html?todoistToken=…&kalenderUrl=…&kalenderNokkel=…  (lagres og fjernes fra adressen)
+(function importerFraLenke() {
+  const p = new URLSearchParams(location.search);
+  const i = lesInnst();
+  let endret = false;
+  for (const k of Object.keys(STANDARD)) {
+    if (p.has(k)) { i[k] = p.get(k); endret = true; }
+  }
+  if (endret) {
+    lagreInnst(i);
+    history.replaceState(null, '', location.pathname);
+  }
+})();
+
+let innst = lesInnst();
+const demo = () => !innst.kalenderUrl && !innst.todoistToken;
+
+// ---------- Hjelpere ----------
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const tidFmt = new Intl.DateTimeFormat('nb-NO', { hour: '2-digit', minute: '2-digit' });
+const datoFmt = new Intl.DateTimeFormat('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' });
+const dagFmt = new Intl.DateTimeFormat('nb-NO', { weekday: 'long', day: 'numeric', month: 'short' });
+
+function dagNokkel(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function parseDato(s) {
+  // "2026-11-24" tolkes som lokal dato (ikke UTC)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+  return new Date(s);
+}
+function dagEtikett(d) {
+  const idag = new Date(); idag.setHours(0, 0, 0, 0);
+  const diff = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - idag) / 86400000);
+  if (diff === 0) return 'I dag';
+  if (diff === 1) return 'I morgen';
+  if (diff === -1) return 'I går';
+  if (diff < -1) return 'For ' + (-diff) + ' dager siden';
+  return dagFmt.format(d);
+}
+
+// ---------- Klokke og nattmodus ----------
+function oppdaterKlokke() {
+  const n = new Date();
+  $('klokke').textContent = tidFmt.format(n);
+  $('dato').textContent = datoFmt.format(n);
+  const h = n.getHours();
+  document.body.classList.toggle('natt', h >= 22 || h < 6);
+  // Last siden på nytt hver natt kl. 03:00 for å få med eventuelle oppdateringer
+  if (h === 3 && n.getMinutes() === 0 && n.getSeconds() < 15) location.reload();
+}
+
+// ---------- Vær (MET Norge / yr) ----------
+const VAER_IKON = [
+  ['thunder', '⛈️'], ['snow', '❄️'], ['sleet', '🌨️'], ['rainshowers', '🌦️'], ['rain', '🌧️'],
+  ['fog', '🌫️'], ['partlycloudy', '⛅'], ['fair', '🌤️'], ['cloudy', '☁️'], ['clearsky', '☀️'],
+];
+function vaerIkon(kode) {
+  if (!kode) return '·';
+  if (kode.startsWith('clearsky_night') || kode.startsWith('fair_night')) return '🌙';
+  for (const [k, ikon] of VAER_IKON) if (kode.includes(k)) return ikon;
+  return '☁️';
+}
+async function hentVaer() {
+  let data;
+  if (demo()) data = demoVaer();
+  else {
+    try {
+      const r = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${(+innst.lat).toFixed(4)}&lon=${(+innst.lon).toFixed(4)}`);
+      if (!r.ok) throw new Error(r.status);
+      data = await r.json();
+    } catch (e) { $('vaer').innerHTML = '<span class="tom">Fikk ikke hentet vær</span>'; return; }
+  }
+  const serie = data.properties.timeseries;
+  const naa = serie[0];
+  const sym = (t) => (t.data.next_1_hours || t.data.next_6_hours || {}).summary?.symbol_code;
+  const nedbor = (t) => (t.data.next_1_hours || t.data.next_6_hours || {}).details?.precipitation_amount || 0;
+  let html = `<div class="vaer-naa"><span class="ikon">${vaerIkon(sym(naa))}</span><span class="temp">${Math.round(naa.data.instant.details.air_temperature)}°</span></div>`;
+  // Neste timer: hver 3. time, 5 stk
+  const start = Date.now();
+  const valgt = serie.filter((t) => { const h = (new Date(t.time) - start) / 3600000; return h > 1.5 && h <= 16; })
+                     .filter((t, i) => i % 3 === 0).slice(0, 5);
+  for (const t of valgt) {
+    const mm = nedbor(t);
+    html += `<div class="vaer-time">${tidFmt.format(new Date(t.time)).slice(0, 2)}<span class="ikon">${vaerIkon(sym(t))}</span><span class="t">${Math.round(t.data.instant.details.air_temperature)}°</span>${mm > 0 ? `<div class="regn">${mm.toLocaleString('nb-NO')} mm</div>` : ''}</div>`;
+  }
+  $('vaer').innerHTML = html;
+}
+
+// ---------- Kalender ----------
+async function hentKalender() {
+  let hendelser;
+  $('kalender-feil').textContent = '';
+  if (demo()) hendelser = demoKalender();
+  else if (!innst.kalenderUrl) { $('kalender').innerHTML = '<div class="tom">Kalender er ikke koblet til ennå.</div>'; return; }
+  else {
+    try {
+      const u = new URL(innst.kalenderUrl);
+      u.searchParams.set('key', innst.kalenderNokkel);
+      u.searchParams.set('days', innst.dager);
+      const r = await fetch(u);
+      const j = await r.json();
+      if (j.error) throw new Error(j.error);
+      hendelser = j.events;
+    } catch (e) { $('kalender-feil').textContent = 'Fikk ikke hentet kalenderen (' + e.message + ')'; return; }
+  }
+  const perDag = new Map();
+  const idag = new Date(); idag.setHours(0, 0, 0, 0);
+  for (let i = 0; i < +innst.dager; i++) { const d = new Date(idag); d.setDate(d.getDate() + i); perDag.set(dagNokkel(d), []); }
+  for (const h of hendelser) {
+    const s = parseDato(h.start);
+    const slutt = parseDato(h.end);
+    if (h.allDay) {
+      // Heldagshendelser kan vare flere dager; vis på hver dag (end er dagen etter siste dag)
+      for (let d = new Date(s); d < slutt; d.setDate(d.getDate() + 1)) {
+        const k = dagNokkel(d); if (perDag.has(k)) perDag.get(k).push(h);
+      }
+    } else {
+      const k = dagNokkel(s < idag ? idag : s);
+      if (perDag.has(k)) perDag.get(k).push(h);
+    }
+  }
+  let html = '';
+  for (const [k, liste] of perDag) {
+    const d = parseDato(k);
+    const etikett = dagEtikett(d);
+    if (!liste.length && etikett !== 'I dag') continue;
+    liste.sort((a, b) => (b.allDay - a.allDay) || (parseDato(a.start) - parseDato(b.start)));
+    html += `<div class="dag"><div class="dag-navn ${etikett === 'I dag' ? 'idag' : ''}">${esc(etikett)}</div>`;
+    if (!liste.length) html += '<div class="tom">Ingenting i kalenderen</div>';
+    for (const h of liste) {
+      const tid = h.allDay ? 'Hele dagen' : tidFmt.format(parseDato(h.start));
+      html += `<div class="hendelse"><span class="tid">${tid}</span><span class="tittel"><span class="prikk" style="background:${esc(h.color || 'var(--accent)')}"></span>${esc(h.title)}</span></div>`;
+    }
+    html += '</div>';
+  }
+  $('kalender').innerHTML = html;
+}
+
+// ---------- Lister (Todoist) ----------
+const TODOIST = 'https://api.todoist.com/api/v1';
+const prosjektId = {};
+const lister = { handle: [], huske: [] };
+
+async function todoist(sti, valg = {}) {
+  const r = await fetch(TODOIST + sti, {
+    ...valg,
+    headers: { Authorization: 'Bearer ' + innst.todoistToken, ...(valg.body ? { 'Content-Type': 'application/json' } : {}) },
+  });
+  if (!r.ok) throw new Error('Todoist svarte ' + r.status);
+  return r.status === 204 ? null : r.json().catch(() => null);
+}
+async function alleSider(sti) {
+  let ut = [], cursor = null;
+  do {
+    const sep = sti.includes('?') ? '&' : '?';
+    const j = await todoist(sti + (cursor ? `${sep}cursor=${encodeURIComponent(cursor)}` : ''));
+    if (Array.isArray(j)) return j;
+    ut = ut.concat(j.results || []);
+    cursor = j.next_cursor;
+  } while (cursor);
+  return ut;
+}
+async function finnProsjekter() {
+  const prosjekter = await alleSider('/projects');
+  for (const [hvilken, navn] of [['handle', innst.handleProsjekt], ['huske', innst.huskeProsjekt]]) {
+    const p = prosjekter.find((x) => x.name.trim().toLowerCase() === navn.trim().toLowerCase());
+    if (!p) throw new Error(`fant ikke prosjektet «${navn}» i Todoist`);
+    prosjektId[hvilken] = p.id;
+  }
+}
+async function hentLister() {
+  if (demo()) { if (!lister.handle.length) Object.assign(lister, demoLister()); tegnLister(); return; }
+  if (!innst.todoistToken) {
+    for (const l of ['handle', 'huske']) $(l + 'liste').innerHTML = '<li class="tom">Todoist er ikke koblet til ennå.</li>';
+    return;
+  }
+  try {
+    if (!prosjektId.handle) await finnProsjekter();
+    for (const l of ['handle', 'huske']) {
+      const oppgaver = await alleSider('/tasks?project_id=' + prosjektId[l]);
+      oppgaver.sort((a, b) => (a.child_order ?? a.order ?? 0) - (b.child_order ?? b.order ?? 0));
+      // Behold «ferdig»-markering for oppgaver vi nettopp krysset av
+      const ferdige = new Set(lister[l].filter((o) => o.ferdig).map((o) => o.id));
+      lister[l] = oppgaver.map((o) => ({ id: o.id, tekst: o.content, frist: o.due?.date, ferdig: ferdige.has(o.id) }));
+      $(l + '-feil').textContent = '';
+    }
+  } catch (e) {
+    for (const l of ['handle', 'huske']) $(l + '-feil').textContent = 'Fikk ikke hentet listen (' + e.message + ')';
+  }
+  tegnLister();
+}
+function tegnLister() {
+  for (const l of ['handle', 'huske']) {
+    const ul = $(l + 'liste');
+    const aktive = lister[l].filter((o) => !o.ferdig).length;
+    $(l + '-antall').textContent = aktive ? aktive + ' igjen' : '';
+    if (!lister[l].length) { ul.innerHTML = `<li class="tom">${l === 'handle' ? 'Ingenting å kjøpe 🎉' : 'Ingenting å huske på 🎉'}</li>`; continue; }
+    const idag = dagNokkel(new Date());
+    ul.innerHTML = lister[l].map((o) => {
+      let frist = '';
+      if (o.frist) {
+        const d = o.frist.slice(0, 10);
+        frist = `<span class="frist ${d < idag ? 'forsinket' : ''}">${esc(dagEtikett(parseDato(d)))}</span>`;
+      }
+      return `<li data-id="${esc(o.id)}" data-liste="${l}" class="${o.ferdig ? 'ferdig' : ''}"><span class="boks">${o.ferdig ? '✓' : ''}</span><span>${esc(o.tekst)}</span>${frist}</li>`;
+    }).join('');
+  }
+}
+document.addEventListener('click', async (e) => {
+  const li = e.target.closest('ul.liste li[data-id]');
+  if (!li) return;
+  const l = li.dataset.liste;
+  const o = lister[l].find((x) => String(x.id) === li.dataset.id);
+  if (!o || o.ferdig) return;
+  o.ferdig = true; tegnLister();
+  if (!demo()) {
+    try { await todoist(`/tasks/${o.id}/close`, { method: 'POST' }); }
+    catch (err) { o.ferdig = false; tegnLister(); $(l + '-feil').textContent = 'Klarte ikke å krysse av (' + err.message + ')'; return; }
+  }
+  // La den stå overstreket et lite øyeblikk før den forsvinner
+  setTimeout(() => { lister[l] = lister[l].filter((x) => x !== o); tegnLister(); }, 4000);
+});
+document.querySelectorAll('form.legg-til').forEach((f) => f.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = f.querySelector('input');
+  const tekst = input.value.trim();
+  if (!tekst) return;
+  const l = f.dataset.liste;
+  input.value = ''; input.blur();
+  if (demo()) { lister[l].push({ id: 'demo' + Date.now(), tekst }); tegnLister(); return; }
+  try {
+    if (!prosjektId[l]) await finnProsjekter();
+    await todoist('/tasks', { method: 'POST', body: JSON.stringify({ content: tekst, project_id: prosjektId[l] }) });
+    hentLister();
+  } catch (err) { $(l + '-feil').textContent = 'Klarte ikke å legge til (' + err.message + ')'; }
+}));
+
+// ---------- Innstillingsdialog ----------
+const skjema = $('innst-skjema');
+$('aapne-innst').onclick = () => {
+  for (const k of Object.keys(STANDARD)) skjema.elements[k].value = innst[k] ?? '';
+  $('innst').classList.add('vis');
+};
+$('lukk-innst').onclick = () => $('innst').classList.remove('vis');
+skjema.onsubmit = (e) => {
+  e.preventDefault();
+  for (const k of Object.keys(STANDARD)) innst[k] = skjema.elements[k].value.trim() || STANDARD[k];
+  lagreInnst(innst);
+  location.reload();
+};
+
+// ---------- Demodata ----------
+function demoKalender() {
+  const d = (dag, t, m) => { const x = new Date(); x.setDate(x.getDate() + dag); x.setHours(t, m, 0, 0); return x.toISOString(); };
+  const dato = (dag) => dagNokkel(new Date(Date.now() + dag * 86400000));
+  return [
+    { title: 'Tannlege (Erlend)', start: d(0, 15, 30), end: d(0, 16, 15), color: '#3a78b8' },
+    { title: 'Middag hos mamma og pappa', start: d(0, 18, 0), end: d(0, 21, 0), color: '#2f6f5e' },
+    { title: 'Restavfall hentes', start: dato(1), end: dato(2), allDay: true, color: '#8a6d3b' },
+    { title: 'Trening', start: d(1, 17, 0), end: d(1, 18, 0), color: '#b4552d' },
+    { title: 'Julebord jobb', start: d(3, 19, 0), end: d(3, 23, 30), color: '#3a78b8' },
+    { title: 'Hytta', start: dato(4), end: dato(6), allDay: true, color: '#2f6f5e' },
+  ];
+}
+function demoLister() {
+  const om = (n) => dagNokkel(new Date(Date.now() + n * 86400000));
+  return {
+    handle: ['Melk', 'Brød', 'Egg', 'Kaffe', 'Bananer', 'Tannkrem'].map((t, i) => ({ id: 'h' + i, tekst: t })),
+    huske: [
+      { id: 'u1', tekst: 'Betale strømregning', frist: om(-1) },
+      { id: 'u2', tekst: 'Kjøpe gave til Ida', frist: om(2) },
+      { id: 'u3', tekst: 'Bestille time til EU-kontroll' },
+      { id: 'u4', tekst: 'Vanne plantene', frist: om(0) },
+    ],
+  };
+}
+function demoVaer() {
+  const serie = [];
+  const koder = ['rain', 'lightrain', 'cloudy', 'partlycloudy_day', 'cloudy', 'rainshowers_day'];
+  for (let i = 0; i < 20; i++) {
+    const t = new Date(); t.setMinutes(0, 0, 0); t.setHours(t.getHours() + i);
+    serie.push({ time: t.toISOString(), data: { instant: { details: { air_temperature: 4 + Math.sin(i / 4) * 2 } }, next_1_hours: { summary: { symbol_code: koder[Math.floor(i / 4) % koder.length] }, details: { precipitation_amount: i % 5 === 0 ? 0.8 : 0 } } } });
+  }
+  return { properties: { timeseries: serie } };
+}
+
+// ---------- Start ----------
+$('demo-banner').hidden = !demo();
+oppdaterKlokke();
+hentVaer(); hentKalender(); hentLister();
+setInterval(oppdaterKlokke, 10 * 1000);
+setInterval(hentVaer, 30 * 60 * 1000);
+setInterval(hentKalender, 5 * 60 * 1000);
+setInterval(() => { if (!document.activeElement || document.activeElement.tagName !== 'INPUT') hentLister(); }, 60 * 1000);
+</script>
+</body>
+</html>
