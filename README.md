@@ -1,6 +1,6 @@
 # Kjøleskapsskjerm
 
-En felles skjerm på kjøleskapet som viser det som gjelder **i dag**: klokke, vær, hva barna må ha på seg, dagens avtaler, dagens middag, søppeltømming, huskeliste og handleliste.
+En felles skjerm (nettbrett på stativ ved frokostbordet) som viser det som gjelder **i dag**: klokke, vær, hva barna må ha på seg, dagens avtaler, dagens middag, søppeltømming, huskeliste og handleliste.
 
 ## Dagens løsning (fra 24. november 2026)
 
@@ -24,6 +24,12 @@ Skjermen er **Handlelista**, appen vi allerede bruker på telefonene. Den ligger
 | I morgen | Én linje etter kl. 17 med morgendagens avtaler, middag og søppel | Som over |
 
 Fra kl. 22 til 06 bytter skjermen til mørkt tema.
+
+### Snakkeknappen
+
+Trykk **🎤 Snakk** øverst i kjøleskapsmodus og si for eksempel «vi trenger to melk og egg, og husk å betale barnehagen». Trykk **Ferdig**, så legger Claude varene i handlelisten og resten i huskelisten. Første gang må du tillate mikrofonen.
+
+Talefunksjonen virker ikke i Safari eller i Claude-appen på iPhone, så knappen vises ikke der. Bruk Chrome (PC eller Android).
 
 ### Slik åpner du kjøleskapsmodus
 
@@ -64,7 +70,7 @@ Ved jul og andre helligdager kan BIR flytte tømmedager. Sjekk BIR-appen da. Hvi
 
 ## Nettbrettet
 
-Anbefalt: Samsung Galaxy Tab A9+ (11") eller et lignende Android-nettbrett, en magnetisk holder og en lang USB-C-kabel.
+Valgt: Samsung Galaxy Tab A11+ (11") på et stativ i vinduskarmen, med USB-C-lader (25 W) og kabel.
 
 1. Sett opp nettbrettet og koble det til wifi.
 2. Slå på batterivern, så det tåler å stå i lading hele tiden: **Innstillinger → Batteri → Batterivern**.
@@ -74,7 +80,8 @@ Anbefalt: Samsung Galaxy Tab A9+ (11") eller et lignende Android-nettbrett, en m
 6. Åpne kjøleskapsmodus (se over), trykk **Tillat** for Google Kalender og legg inn kalender-ID-ene under **Innstillinger**.
 
 Godt å vite:
-- Nettbrettet er logget inn på Claude-kontoen. Fully Kiosk låser det til Handlelista, så chatter og annet er ikke tilgjengelig fra kjøleskapet.
+- Nettbrettet er logget inn på Claude-kontoen. Fully Kiosk låser det til Handlelista, så chatter og annet er ikke tilgjengelig fra skjermen.
+- Hvis snakkeknappen ikke vises i Fully Kiosk, bruk Chrome i stedet.
 - Innloggingen kan av og til gå ut. Da logger du bare inn på nytt.
 
 ## Personvern
