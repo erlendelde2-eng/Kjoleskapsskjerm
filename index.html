@@ -51,6 +51,8 @@
   .klokke { font-size: 64px; font-weight: 600; letter-spacing: -1px; line-height: 1; font-variant-numeric: tabular-nums; }
   .dato { font-size: 22px; color: var(--muted); }
   .dato::first-letter { text-transform: uppercase; }
+  .tamed { margin-top: 6px; font-size: 18px; background: var(--accent-soft); color: var(--ink); border-radius: 10px; padding: 5px 10px; display: inline-block; }
+  .tamed:empty { display: none; }
   .vaer { margin-left: auto; display: flex; gap: 18px; align-items: center; }
   .vaer-naa { display: flex; align-items: center; gap: 8px; }
   .vaer-naa .ikon { font-size: 48px; }
@@ -144,6 +146,7 @@
     <div>
       <div class="klokke" id="klokke">--:--</div>
       <div class="dato" id="dato"></div>
+      <div class="tamed" id="tamed"></div>
     </div>
     <div class="vaer" id="vaer"></div>
     <button class="tannhjul" id="aapne-innst" aria-label="Innstillinger">⚙︎</button>
@@ -314,6 +317,34 @@ async function hentVaer() {
     html += `<div class="vaer-time">${tidFmt.format(new Date(t.time)).slice(0, 2)}<span class="ikon">${vaerIkon(sym(t))}</span><span class="t">${Math.round(t.data.instant.details.air_temperature)}°</span>${mm > 0 ? `<div class="regn">${mm.toLocaleString('nb-NO')} mm</div>` : ''}</div>`;
   }
   $('vaer').innerHTML = html;
+  $('tamed').textContent = taMedIDag(serie);
+}
+
+// «Ta med i dag»: ser på været i barnehagetiden (07–17), eller i morgen etter kl. 17
+function taMedIDag(serie) {
+  const n = new Date();
+  const dag = new Date(n); if (n.getHours() >= 17) dag.setDate(dag.getDate() + 1);
+  const fra = new Date(dag); fra.setHours(7, 0, 0, 0);
+  const til = new Date(dag); til.setHours(17, 0, 0, 0);
+  const timer = serie.filter((t) => { const d = new Date(t.time); return d >= fra && d < til; });
+  if (!timer.length) return '';
+  let min = Infinity, regn = 0, vind = 0, sno = false;
+  for (const t of timer) {
+    const d = t.data.instant.details;
+    min = Math.min(min, d.air_temperature);
+    vind = Math.max(vind, d.wind_speed || 0);
+    const neste = t.data.next_1_hours;
+    if (neste) { regn += neste.details?.precipitation_amount || 0; if (/snow|sleet/.test(neste.summary?.symbol_code || '')) sno = true; }
+  }
+  const ting = [];
+  if (sno) ting.push('vinterdress');
+  else if (regn >= 0.5) ting.push('regntøy og støvler');
+  if (min <= 0) ting.push('ullundertøy', 'lue og votter');
+  else if (min <= 6) ting.push('ull', 'lue');
+  if (vind >= 8 && !sno) ting.push('vindtett jakke');
+  if (!ting.length) return '';
+  const tekst = ting.join(', ').replace(/, ([^,]*)$/, ' og $1');
+  return (n.getHours() >= 17 ? 'I morgen: ' : 'Ta med i dag: ') + tekst;
 }
 
 // ---------- Kalender ----------
